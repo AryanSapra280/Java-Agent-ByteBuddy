@@ -19,27 +19,21 @@ public class PostControllerInterceptor {
 //    public ResponseEntity<?> savePostInterceptorOnEny() {
 //
 //    }
-@RuntimeType
-public static String intercept(@Origin Method method, @AllArguments Object[] args,
-                               @SuperCall Callable<?> superMethod) throws Throwable {
-    // Interceptor logic before method execution
-    System.out.println("Interceptor: Before method execution: " + method.getName());
+    @RuntimeType
+    public static String intercept(@Origin Method method, @AllArguments Object[] args,
+                                   @SuperCall Callable<?> superMethod) throws Throwable {
+        // Interceptor logic before method execution
+        System.out.println("Interceptor: Before method execution: " + method.getName());
 
-    // You can access and manipulate method arguments here
-    String postString = (String) args[0];
-    System.out.println("Request body: " + postString);
+        // You can access and manipulate method arguments here
+        String postString = (String) args[0];
+        System.out.println("Request body: " + postString);
 
-    // Proceed with the original method execution
-    String response = (String)superMethod.call();
+        // Proceed with the original method execution
+        String response = (String)superMethod.call();
 
-    // Interceptor logic after method execution
-    System.out.println("Interceptor: After method execution: " + method.getName());
+        System.out.println("Response" + response);
 
-    return response;
-}
-
-    @Advice.OnMethodExit
-    public static void onExit(@Advice.Return String responseEntity) {
-        System.out.println("Exiting method savePost with response entity: " + responseEntity);
+        return response;
     }
 }
