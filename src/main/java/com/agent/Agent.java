@@ -79,5 +79,8 @@ public final class Agent {
                     .installOn(instrumentation);
 
         }
+        else if("REPLAY".equals(MODE)) {
+            ;
+        }
     }
 }
