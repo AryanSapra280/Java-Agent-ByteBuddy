@@ -28,6 +28,7 @@ public final class Agent {
     public static void premain(String args, Instrumentation instrumentation) {
         System.out.println("Premain method executed");
         System.out.println("ByteBuddy's classloader: " + Agent.class.getClassLoader());
+        final String MODE = System.getenv("HT_MODE");
 //        new AgentBuilder.Default()
 //                .type((ElementMatchers.nameStartsWith("com.application.mainApplication.PostService")))
 //                .transform((builder, typeDescription, classLoader, module, protectionDomain) -> {
@@ -52,30 +53,31 @@ public final class Agent {
 //                    }
 //                })
 //                .installOn(instrumentation);
+        if("RECORD".equals(MODE)) {
+            new AgentBuilder.Default()
+                    .type((ElementMatchers.nameStartsWith("com.application.mainApplication.controllers")))
+                    .transform((builder, typeDescription, classLoader, module, protectionDomain) -> {
+                        String name = typeDescription.getName();
+                        if (name.startsWith("com.application.controllers")) {
+                            System.out.println("Transforming class: " + name + ", ClassLoader: " + classLoader);
+                        }
+                        return builder.method(ElementMatchers.named("savePost"))
+                                .intercept(MethodDelegation.to(RecordInterceptor.class));
+                    })
+                    .with(new AgentBuilder.Listener.Adapter() {
+                        @Override
+                        public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, boolean loaded, DynamicType dynamicType) {
+                            System.out.println("Transformed: " + typeDescription.getName());
+                        }
 
-        new AgentBuilder.Default()
-                .type((ElementMatchers.nameStartsWith("com.application.mainApplication.controllers")))
-                .transform((builder, typeDescription, classLoader, module, protectionDomain) -> {
-                    String name = typeDescription.getName();
-                    if (name.startsWith("com.application.controllers")) {
-                        System.out.println("Transforming class: " + name + ", ClassLoader: " + classLoader);
-                    }
-                    return builder.method(ElementMatchers.named("savePost"))
-                            .intercept(MethodDelegation.to(PostControllerInterceptor.class));
-                })
-                .with(new AgentBuilder.Listener.Adapter() {
-                    @Override
-                    public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, JavaModule module, boolean loaded, DynamicType dynamicType) {
-                        System.out.println("Transformed: " + typeDescription.getName());
-                    }
+                        @Override
+                        public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
+                            System.err.println("Error transforming " + typeName);
+                            throwable.printStackTrace();
+                        }
+                    })
+                    .installOn(instrumentation);
 
-                    @Override
-                    public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
-                        System.err.println("Error transforming " + typeName);
-                        throwable.printStackTrace();
-                    }
-                })
-                .installOn(instrumentation);
-
+        }
     }
 }
